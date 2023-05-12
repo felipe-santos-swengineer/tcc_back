@@ -6,9 +6,8 @@ CREATE TABLE IF NOT EXISTS usuarios(
 	sexo VARCHAR(20),
 	data_nascimento VARCHAR(10),
 	telefone VARCHAR(15),
-	cidade VARCHAR(100),
 	usertoken VARCHAR(100) NOT NULL UNIQUE,
-	tipo VARCHAR(10),
+	tipo VARCHAR(20),
 	ativo BOOLEAN NOT NULL DEFAULT TRUE,
 	data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (id)
@@ -22,9 +21,8 @@ CREATE TABLE IF NOT EXISTS usuarios_pendentes(
 	sexo VARCHAR(20),
 	data_nascimento VARCHAR(10),
 	telefone VARCHAR(15),
-	cidade VARCHAR(100),
 	usertoken VARCHAR(100) NOT NULL UNIQUE,
-	tipo VARCHAR(10),
+	tipo VARCHAR(20),
 	ativo BOOLEAN NOT NULL DEFAULT TRUE,
 	data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (id)
@@ -88,5 +86,13 @@ CREATE TABLE IF NOT EXISTS solicitacao_amigo(
 	PRIMARY KEY (id)
 );
 
-
+CREATE TABLE IF NOT EXISTS perfis(
+	id SERIAL NOT NULL,
+	usertoken VARCHAR NOT NULL,
+	tags VARCHAR,
+	cidade VARCHAR,
+	sobre VARCHAR DEFAULT 'Sem resumo cadastrado.',
+	data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (id)
+);
 

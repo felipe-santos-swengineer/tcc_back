@@ -20,10 +20,10 @@ validarEmail.prototype.validar = async function (req, res) {
 			return;
 		}
 
-		var query2 = await pool.query("INSERT INTO usuarios(nome, email, senha, sexo, data_nascimento, telefone, cidade, usertoken, ativo) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)", [
+		var query2 = await pool.query("INSERT INTO usuarios(nome, email, senha, sexo, data_nascimento, telefone, usertoken, ativo, tipo) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)", [
 			query.rows[0].nome, query.rows[0].email, query.rows[0].senha, query.rows[0].sexo,
-			query.rows[0].data_nascimento, query.rows[0].telefone, query.rows[0].cidade,
-			query.rows[0].usertoken, query.rows[0].ativo
+			query.rows[0].data_nascimento, query.rows[0].telefone,
+			query.rows[0].usertoken, query.rows[0].ativo, query.rows[0].tipo
 		]);
 
 		var query3 = await pool.query("DELETE FROM usuarios_pendentes WHERE usertoken = $1", [

@@ -5,7 +5,7 @@ var consign = require('consign');
 require('./config/auth');
 
 //middleware
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '30mb' }));
 app.use(cors());
 app.use(express.json());
 app.set('view engine', 'ejs');

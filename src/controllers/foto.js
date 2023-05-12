@@ -13,3 +13,11 @@ module.exports.getByToken = function (app, req, res) {
     fotoModel.getByToken(req, res)
 
 }
+
+module.exports.getById = function (app, req, res) {
+
+    var fotoModel = new app.src.models.foto();
+
+    fotoModel.getById(req, res)
+
+}

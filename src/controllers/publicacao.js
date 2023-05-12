@@ -14,6 +14,15 @@ module.exports.get = function (app, req, res) {
 
 }
 
+module.exports.getById = function (app, req, res) {
+
+    var publicacaoModel = new app.src.models.publicacao();
+
+    publicacaoModel.getById(req, res)
+
+}
+
+
 module.exports.inserirLike = function (app, req, res) {
 
     var publicacaoModel = new app.src.models.publicacao();

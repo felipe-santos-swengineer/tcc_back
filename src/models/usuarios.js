@@ -94,6 +94,7 @@ usuarios.prototype.inserir = async function (req, res) {
         var telefone = body.telefone.trim();
         var sexo = body.sexo.trim();
         var usertoken = uuidv4();
+        var tipo = "Aluno"
 
         //validação
 
@@ -107,6 +108,14 @@ usuarios.prototype.inserir = async function (req, res) {
         else {
             res.json("Apenas emails UFC são aceitos");
             return;
+        }
+
+        if(email.includes("@ufc.br")){
+            tipo = "Colaborador"
+        }
+
+        if(email.includes("@alu.ufc.br")){
+            tipo = "Aluno"
         }
 
         if (senha.length < 6) {
@@ -139,8 +148,8 @@ usuarios.prototype.inserir = async function (req, res) {
 
         //criação
 
-        const query2 = await pool.query("INSERT INTO usuarios_pendentes (email, senha, data_nascimento, nome, telefone, usertoken, sexo) VALUES ($1,$2,$3,$4,$5,$6,$7)", [
-            email, senha, data_nascimento, nome, telefone, usertoken, sexo
+        const query2 = await pool.query("INSERT INTO usuarios_pendentes (email, senha, data_nascimento, nome, telefone, usertoken, sexo, tipo) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", [
+            email, senha, data_nascimento, nome, telefone, usertoken, sexo, tipo
         ]);
 
         res.json("Usuário inserido");

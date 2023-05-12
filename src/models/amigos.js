@@ -3,7 +3,6 @@ require("dotenv").config();
 
 function amigos() { }
 
-
 amigos.prototype.naoAmigos = async function (req, res) {
     try {
 
@@ -28,23 +27,41 @@ amigos.prototype.naoAmigos = async function (req, res) {
             return;
         }
 
-
         var query1;
-        var query2;
         var naoAmigos = [];
 
+        //para cada usuario diferente de mim
         for (var i = 0; i < query.rowCount; i++) {
-            query1 = await pool.query("SELECT * FROM amigos WHERE pessoa_id = $1", [
-                query.rows[i].id
+
+            //verifica se ja somos amigos
+            query1 = await pool.query("SELECT * FROM amigos WHERE pessoa_id = $1 AND pessoa1_id = $2", [
+                query.rows[i].id, query_.rows[0].id
             ]);
 
-            //verificar se ja são amigos
+            //verificar se algum dos dois solicitou amizade
             const query2 = await pool.query("SELECT * FROM solicitacao_amigo WHERE de_id = $1 AND para_id = $2", [
                 query_.rows[0].id, query.rows[i].id
             ]);
 
-            if (query1.rowCount < 1 && query2.rowCount < 1) {
-                naoAmigos.push({ nome: query.rows[i].nome, id: query.rows[i].id })
+            const query3 = await pool.query("SELECT * FROM solicitacao_amigo WHERE de_id = $1 AND para_id = $2", [
+                query.rows[i].id, query_.rows[0].id
+            ]);
+
+            //se passou em tudo, é uma pessoa desconhecida
+            if (query1.rowCount < 1 && query2.rowCount < 1 && query3.rowCount < 1) {
+                //busca foto de pf
+                const query4 = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [
+                    query.rows[i].id
+                ]);
+
+                var foto = ''
+
+                //se achou foto no banco, devolve
+                if (query4.rowCount > 0) {
+                    foto = query4.rows[0].img_json.img
+                }
+
+                naoAmigos.push({ nome: query.rows[i].nome, id: query.rows[i].id, foto: foto })
             }
         }
 
@@ -54,7 +71,7 @@ amigos.prototype.naoAmigos = async function (req, res) {
     }
     catch (err) {
         console.log(err);
-        res.json(err);
+        res.json([]);
         return;
     }
 }
@@ -65,7 +82,7 @@ amigos.prototype.amigos = async function (req, res) {
         var body = req.body;
         var usertoken = body.usertoken;
 
-        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken != $1", [
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
             usertoken
         ]);
 
@@ -77,14 +94,23 @@ amigos.prototype.amigos = async function (req, res) {
         var query1;
         var amigos = [];
 
-        for (var i = 0; i < query.rowCount; i++) {
-            query1 = await pool.query("SELECT * FROM amigos WHERE pessoa_id = $1", [
-                query.rows[i].id
+        query1 = await pool.query("SELECT ami.pessoa1_id as id, usu.nome as nome FROM usuarios usu INNER JOIN amigos ami ON usu.id = ami.pessoa1_id WHERE pessoa_id = $1", [
+            query.rows[0].id
+        ]);
+
+        for (var i = 0; i < query1.rowCount; i++) {
+            const query2 = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [
+                query1.rows[i].id
             ]);
 
-            if (query1.rowCount > 0) {
-                amigos.push({ nome: query.rows[i].nome, id: query.rows[i].id })
+            var foto = ''
+
+            //se achou foto no banco, devolve
+            if (query2.rowCount > 0) {
+                foto = query2.rows[0].img_json.img
             }
+
+            amigos.push({ nome: query1.rows[i].nome, id: query1.rows[i].id, foto: foto })
         }
 
         res.json(amigos);
@@ -93,7 +119,7 @@ amigos.prototype.amigos = async function (req, res) {
     }
     catch (err) {
         console.log(err);
-        res.json(err);
+        res.json([]);
         return;
     }
 }

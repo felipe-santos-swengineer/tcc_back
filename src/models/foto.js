@@ -26,7 +26,7 @@ foto.prototype.inserir = async function (req, res) {
             query.rows[0].id, usertoken, { img }
         ]);
 
-        res.json("Usuario inserido");
+        res.json("Foto inserida");
         return
 
 
@@ -48,12 +48,12 @@ foto.prototype.getByToken = async function (req, res) {
         //validação
 
         if (usertoken) {
-            const query = await pool.query("SELECT * FROM foto_perfil WHERE usertoken = $1", [
+            const query = await pool.query("SELECT id, img_json FROM foto_perfil WHERE usertoken = $1", [
                 usertoken
             ]);
 
             if (query.rowCount > 0) {
-                res.json(query.rows[0]);
+                res.json([query.rows[0]]);
                 return;
             }
             else {
@@ -61,13 +61,13 @@ foto.prototype.getByToken = async function (req, res) {
                 return;
             }
         }
-        else if(id){
-            const query = await pool.query("SELECT * FROM foto_perfil WHERE user_id = $1", [
+        else if (id) {
+            const query = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [
                 id
             ]);
 
             if (query.rowCount > 0) {
-                res.json(query.rows[0]);
+                res.json([query.rows[0]]);
                 return;
             }
             else {
@@ -76,9 +76,7 @@ foto.prototype.getByToken = async function (req, res) {
             }
         }
 
-
-
-        res.json([]);
+        res.json('');
         return
 
 
@@ -89,6 +87,48 @@ foto.prototype.getByToken = async function (req, res) {
     }
 }
 
+
+foto.prototype.getById = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var id = body.id;
+        //validação
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json("Usuario inválido")
+            return;
+        }
+
+        const query1 = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [
+            id
+        ]);
+
+        if (query1.rowCount < 1) {
+            res.json([]);
+            return;
+        }
+        else {
+            res.json([query1.rows[0]]);
+            return;
+        }
+
+
+        res.json('');
+        return
+
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err)
+    }
+}
 
 module.exports = function () {
     return foto;
