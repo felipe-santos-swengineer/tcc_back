@@ -124,12 +124,12 @@ amigos.prototype.amigos = async function (req, res) {
     }
 }
 
-amigos.prototype.solicitacoes = async function (req, res) {
+amigos.prototype.getSolicitacoes = async function (req, res) {
     try {
 
         var body = req.body;
         var usertoken = body.usertoken;
-
+        
         const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
             usertoken
         ]);
@@ -139,23 +139,56 @@ amigos.prototype.solicitacoes = async function (req, res) {
             return;
         }
 
-        var solicitacoes = [];
-
-        const query1 = await pool.query("SELECT * FROM solicitacao_amigo WHERE pessoa_id = $1 or pessoa1_id", [
-            query.rows[i].id
+        //Solicitacoes enviadas
+        const query1 = await pool.query("SELECT usu.nome as nome, usu.id as id FROM solicitacao_amigo sol INNER JOIN usuarios usu ON usu.id = sol.para_id WHERE sol.de_id = $1", [
+            query.rows[0].id
         ]);
 
-        if (query1.rowCount > 0) {
-            solicitacoes.push({ nome: query.rows[i].nome, id: query.rows[i].id })
+
+        //Solicitacoes recebidas
+        const query2 = await pool.query("SELECT usu.nome as nome, usu.id as id FROM solicitacao_amigo sol INNER JOIN usuarios usu ON usu.id = sol.de_id WHERE sol.para_id = $1", [
+            query.rows[0].id
+        ]);
+
+        var enviadas = []
+        var recebidas = []
+
+        //adiciona fotos
+        for (var i = 0; i < query1.rowCount; i++) {
+            const query3 = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [
+                query1.rows[i].id
+            ]);
+
+            var foto = ''
+
+            //se achou foto no banco, devolve
+            if (query3.rowCount > 0) {
+                foto = query3.rows[0].img_json.img
+            }
+            enviadas.push({ nome: query1.rows[i].nome, id: query1.rows[i].id, foto: foto })
         }
 
-        res.json(solicitacoes);
+        for (var i = 0; i < query2.rowCount; i++) {
+            const query4 = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [
+                query2.rows[i].id
+            ]);
+
+            var foto = ''
+
+            //se achou foto no banco, devolve
+            if (query4.rowCount > 0) {
+                foto = query4.rows[0].img_json.img
+            }
+            recebidas.push({ nome: query2.rows[i].nome, id: query2.rows[i].id, foto: foto })
+        }
+
+        res.json([{enviadas: enviadas, recebidas: recebidas}]);
         return;
 
     }
     catch (err) {
         console.log(err);
-        res.json(err);
+        res.json([]);
         return;
     }
 }
@@ -166,9 +199,6 @@ amigos.prototype.adicionar = async function (req, res) {
         var body = req.body;
         var usertoken = body.usertoken;
         var to_id = body.to_id;
-
-        console.log(usertoken + " " + to_id)
-        console.log(typeof usertoken + " " + typeof to_id)
 
         const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
             usertoken

@@ -12,4 +12,8 @@ module.exports = function (app) {
         app.src.controllers.amigos.adicionar(app, req, res);
     });
 
+    app.post('/getSolicitacoes', function (req, res) {
+        app.src.controllers.amigos.getSolicitacoes(app, req, res);
+    });
+
 }

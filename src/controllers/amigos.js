@@ -21,3 +21,11 @@ module.exports.adicionar = function (app, req, res) {
     model.adicionar(req, res)
 
 }
+
+module.exports.getSolicitacoes = function (app, req, res) {
+
+    var model = new app.src.models.amigos();
+
+    model.getSolicitacoes(req, res)
+
+}
