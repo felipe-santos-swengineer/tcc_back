@@ -22,6 +22,12 @@ module.exports.getById = function (app, req, res) {
 
 }
 
+module.exports.getById2 = function (app, req, res) {
+
+    var publicacaoModel = new app.src.models.publicacao();
+
+    publicacaoModel.getById2(req, res)
+}
 
 module.exports.inserirLike = function (app, req, res) {
 

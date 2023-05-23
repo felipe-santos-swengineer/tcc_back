@@ -12,6 +12,10 @@ module.exports = function (app) {
         app.src.controllers.publicacao.getById(app, req, res);
     });
 
+    app.post('/getByIdPub2', function (req, res) {
+        app.src.controllers.publicacao.getById2(app, req, res);
+    });
+
     app.post('/inserirLike', function (req, res) {
         app.src.controllers.publicacao.inserirLike(app, req, res);
     });
