@@ -277,6 +277,60 @@ amigos.prototype.adicionar = async function (req, res) {
     }
 }
 
+
+amigos.prototype.remover = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var to_id = body.to_id;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json("Usuário Invalido!")
+            return;
+        }
+
+        const pessoa1 = await pool.query("SELECT * FROM usuarios WHERE id = $1", [
+            to_id
+        ]);
+
+        const pessoa2 = await pool.query("SELECT * FROM usuarios WHERE id = $1", [
+            query.rows[0].id
+        ]);
+        
+        //Delete relação de amizade
+        const deleteRelation1 = await pool.query("DELETE FROM amigos WHERE pessoa_id = $1 AND pessoa1_id = $2", [
+            pessoa1.rows[0].id, pessoa2.rows[0].id
+        ]);
+
+        const deleteRelation2 = await pool.query("DELETE FROM amigos WHERE pessoa_id = $1 AND pessoa1_id = $2", [
+            pessoa2.rows[0].id, pessoa1.rows[0].id
+        ]);
+
+        //Delete relação de solicitacao
+        var deleteRelation3 = await pool.query("DELETE FROM solicitacao_amigo WHERE de_id = $1 AND para_id = $2", [
+            pessoa1.rows[0].id, pessoa2.rows[0].id
+        ]);
+        var deleteRelation4 = await pool.query("DELETE FROM solicitacao_amigo WHERE de_id = $1 AND para_id = $2", [
+            pessoa2.rows[0].id, pessoa1.rows[0].id
+        ]);
+
+        res.json("Amizade removida!");
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
+
+
 module.exports = function () {
     return amigos;
 }

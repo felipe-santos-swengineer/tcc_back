@@ -12,6 +12,10 @@ module.exports = function (app) {
         app.src.controllers.amigos.adicionar(app, req, res);
     });
 
+    app.post('/removerAmigos', function (req, res) {
+        app.src.controllers.amigos.remover(app, req, res);
+    });
+
     app.post('/getSolicitacoes', function (req, res) {
         app.src.controllers.amigos.getSolicitacoes(app, req, res);
     });

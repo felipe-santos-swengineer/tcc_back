@@ -22,6 +22,14 @@ module.exports.adicionar = function (app, req, res) {
 
 }
 
+module.exports.remover = function (app, req, res) {
+
+    var model = new app.src.models.amigos();
+
+    model.remover(req, res)
+
+}
+
 module.exports.getSolicitacoes = function (app, req, res) {
 
     var model = new app.src.models.amigos();
