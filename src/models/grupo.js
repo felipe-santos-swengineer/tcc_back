@@ -67,14 +67,14 @@ grupo.prototype.getGrupo = async function (req, res) {
             return;
         }
 
-        var getGp = await pool.query("select grupo.id as id, grupo.titulo as titulo from grupo inner join membros_grupo on id_membro = $1 group by grupo.id", [
+        var getGp = await pool.query("select grupo.id as id, grupo.titulo as titulo from grupo grupo inner join membros_grupo membros on membros.id_grupo = grupo.id where membros.id_membro = $1", [
             query.rows[0].id
         ]);
 
         if (getGp.rowCount > 0) {
             for (var i = 0; i < getGp.rowCount; i++) {
                 var getParticipantes = await pool.query("select nome, usuarios.id from usuarios inner join membros_grupo on membros_grupo.id_membro = usuarios.id where membros_grupo.id_grupo = $1 and membros_grupo.id_membro != $2", [
-                    getGp.rows[i].id,  query.rows[0].id
+                    getGp.rows[i].id, query.rows[0].id
                 ]);
                 getGp.rows[i]['participantes'] = getParticipantes.rows
             }
@@ -93,6 +93,150 @@ grupo.prototype.getGrupo = async function (req, res) {
     }
 }
 
+
+grupo.prototype.getGrupoById = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var grupo_id = body.grupo_id;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json([])
+            return;
+        }
+
+        var getGp = await pool.query("select grupo.id as id, grupo.titulo as titulo from grupo grupo inner join membros_grupo membros on membros.id_grupo = grupo.id where membros.id_membro = $1 and grupo.id = $2", [
+            query.rows[0].id, grupo_id
+        ]);
+
+        if (getGp.rowCount > 0) {
+            for (var i = 0; i < getGp.rowCount; i++) {
+                var getParticipantes = await pool.query("select nome, usuarios.id from usuarios inner join membros_grupo on membros_grupo.id_membro = usuarios.id where membros_grupo.id_grupo = $1 and membros_grupo.id_membro != $2", [
+                    getGp.rows[i].id, query.rows[0].id
+                ]);
+                getGp.rows[i]['participantes'] = getParticipantes.rows
+            }
+            res.json(getGp.rows)
+            return
+        }
+
+        res.json([])
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
+
+grupo.prototype.getMensagensGrupo = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var grupo_id = body.grupo_id;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json([])
+            return;
+        }
+
+        var getGp = await pool.query("select grupo.id as id, grupo.titulo as titulo from grupo grupo inner join membros_grupo membros on membros.id_grupo = grupo.id where membros.id_membro = $1 and grupo.id = $2", [
+            query.rows[0].id, grupo_id
+        ]);
+
+        if (getGp.rowCount > 0) {
+            var getMensagens = await pool.query("select * from mensagem_grupo where grupo_id = $1 ORDER BY data_criacao ASC", [
+                grupo_id
+            ]);
+
+            for(var i = 0; i < getMensagens.rowCount; i++){
+                var getFoto = await pool.query("select img_json from foto_perfil where user_id = $1", [
+                    getMensagens.rows[i].autor
+                ]);
+
+                var getNome = await pool.query("select nome from usuarios where id = $1", [
+                    getMensagens.rows[i].autor
+                ]);
+
+                if(getFoto.rowCount > 0){
+                    getMensagens.rows[i]['foto'] = getFoto.rows[0].img_json.img
+                }
+                
+                getMensagens.rows[i]['nome'] = getNome.rows[0].nome
+    
+                if(getMensagens.rows[i].autor === query.rows[0].id){
+                    getMensagens.rows[i]['self'] = true
+                }
+                else{
+                    getMensagens.rows[i]['self'] = false
+                }
+                
+            }
+
+            res.json(getMensagens.rows)
+            return
+        }
+
+        res.json([])
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
+
+grupo.prototype.setMensagensGrupo = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var grupo_id = body.grupo_id;
+        var mensagem = body.mensagem;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json([])
+            return;
+        }
+
+        var getGp = await pool.query("select grupo.id as id, grupo.titulo as titulo from grupo grupo inner join membros_grupo membros on membros.id_grupo = grupo.id where membros.id_membro = $1 and grupo.id = $2", [
+            query.rows[0].id, grupo_id
+        ]);
+
+        if (getGp.rowCount > 0) {
+            var insertMsg = await pool.query("insert into mensagem_grupo (conteudo, autor, grupo_id) VALUES ($1, $2, $3)", [
+                mensagem, query.rows[0].id, grupo_id
+            ]);
+        }
+
+        res.json([])
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
 
 module.exports = function () {
     return grupo;
