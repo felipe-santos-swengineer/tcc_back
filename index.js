@@ -4,7 +4,6 @@ const cors = require("cors");
 var consign = require('consign');
 require('./config/auth');
 
-//middleware
 app.use(express.json({ limit: '30mb' }));
 app.use(cors());
 app.use(express.json());

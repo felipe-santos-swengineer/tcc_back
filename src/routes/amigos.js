@@ -20,4 +20,12 @@ module.exports = function (app) {
         app.src.controllers.amigos.getSolicitacoes(app, req, res);
     });
 
+    app.post('/amigosComum', function (req, res) {
+        app.src.controllers.amigos.amigosComum(app, req, res);
+    });
+
+    app.post('/naoAmigosComum', function (req, res) {
+        app.src.controllers.amigos.naoAmigosComum(app, req, res);
+    });
+
 }

@@ -14,6 +14,22 @@ module.exports.naoAmigos = function (app, req, res) {
 
 }
 
+module.exports.amigosComum = function (app, req, res) {
+
+    var model = new app.src.models.amigos();
+
+    model.amigosComum(req, res)
+
+}
+
+module.exports.naoAmigosComum = function (app, req, res) {
+
+    var model = new app.src.models.amigos();
+
+    model.naoAmigosComum(req, res)
+
+}
+
 module.exports.adicionar = function (app, req, res) {
 
     var model = new app.src.models.amigos();
