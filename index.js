@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 var consign = require('consign');
+var db = require("./config/db");
 require('./config/auth');
 
 app.use(express.json({ limit: '30mb' }));
