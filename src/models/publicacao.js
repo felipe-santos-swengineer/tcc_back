@@ -64,8 +64,11 @@ publicacao.prototype.get = async function (req, res) {
         var usuarios = await pool.query("SELECT * FROM usuarios", []);
 
 
-
         for (var i = 0; i < publicacoes.rowCount; i++) {
+
+            var id_publicador = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1 ORDER BY data_criacao", [
+                publicacoes.rows[i].usertoken
+            ]);
 
             //adiciona campo likes
             publicacoes.rows[i].curtiu = false
@@ -93,11 +96,18 @@ publicacao.prototype.get = async function (req, res) {
                 var autor = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
                     comentarios.rows[j].usertoken
                 ]);
-                aComentarios.push({ nome: autor.rows[0].nome, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
+                aComentarios.push({ nome: autor.rows[0].nome, id_autor: autor.rows[0].id, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
             }
 
             publicacoes.rows[i].comentarios = aComentarios
             publicacoes.rows[i].openComentarios = false
+            publicacoes.rows[i].id_publicador = id_publicador.rows[0].id
+            if (id_publicador.rows[0].id === query.rows[0].id) {//se eu sou o dono da publicacao
+                publicacoes.rows[i].owner = true
+            }
+            else {
+                publicacoes.rows[i].owner = false
+            }
 
             var fotos = await pool.query("SELECT id, img_json FROM foto_perfil WHERE usertoken = $1", [publicacoes.rows[i].usertoken]);
             if (fotos.rowCount > 0) {
@@ -113,6 +123,42 @@ publicacao.prototype.get = async function (req, res) {
         }
 
         res.json(publicacoes.rows);
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
+
+
+publicacao.prototype.update = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var id = body.id;
+        var conteudo = body.conteudo;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+
+        if (query.rowCount < 1) {
+            res.json([])
+            return;
+        }
+
+        if (conteudo.trim().length > 0) {
+            var publicacoes = await pool.query("UPDATE publicacao SET conteudo = $1 WHERE id = $2 AND usertoken = $3", [
+                conteudo, id, usertoken
+            ]);
+        }
+
+        res.json([]);
         return;
 
     }
@@ -140,7 +186,7 @@ publicacao.prototype.getById = async function (req, res) {
             return;
         }
 
-        var publicacoes = await pool.query("SELECT usuarios.id as user, usuarios.nome, publicacao.id, publicacao.conteudo, publicacao.visivel, publicacao.data_criacao FROM USUARIOS INNER JOIN publicacao ON publicacao.usertoken = usuarios.usertoken WHERE usuarios.id = $1 ORDER BY data_criacao DESC ", [id]);
+        var publicacoes = await pool.query("SELECT usuarios.id as user, usuarios.usertoken, usuarios.nome, publicacao.id, publicacao.conteudo, publicacao.visivel, publicacao.data_criacao FROM USUARIOS INNER JOIN publicacao ON publicacao.usertoken = usuarios.usertoken WHERE usuarios.id = $1 ORDER BY data_criacao DESC ", [id]);
 
         var likes = await pool.query("SELECT * FROM likes WHERE usertoken = $1", [
             usertoken
@@ -149,6 +195,10 @@ publicacao.prototype.getById = async function (req, res) {
         var usuarios = await pool.query("SELECT * FROM usuarios");
 
         for (var i = 0; i < publicacoes.rowCount; i++) {
+
+            var id_publicador = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1 ORDER BY data_criacao", [
+                publicacoes.rows[i].usertoken
+            ]);
 
             //adiciona campo likes
             publicacoes.rows[i].curtiu = false
@@ -176,14 +226,21 @@ publicacao.prototype.getById = async function (req, res) {
                 var autor = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
                     comentarios.rows[j].usertoken
                 ]);
-                aComentarios.push({ nome: autor.rows[0].nome, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
+                aComentarios.push({ id_autor: autor.rows[0].id, nome: autor.rows[0].nome, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
             }
 
             publicacoes.rows[i].comentarios = aComentarios
             publicacoes.rows[i].openComentarios = false
+            publicacoes.rows[i].id_publicador = id_publicador.rows[0].id
+            if (id_publicador.rows[0].id === query.rows[0].id) {//se eu sou o dono da publicacao
+                publicacoes.rows[i].owner = true
+            }
+            else {
+                publicacoes.rows[i].owner = false
+            }
 
             //deleta campo usertoken
-            //delete publicacoes.rows[i].usertoken
+            delete publicacoes.rows[i].usertoken
 
             var fotos = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [publicacoes.rows[i].user]);
             if (fotos.rowCount > 0) {
@@ -212,7 +269,7 @@ publicacao.prototype.getById2 = async function (req, res) {
         var body = req.body;
         var usertoken = body.usertoken;
         var id = body.id;
-        console.log(id)
+        console.log("estou aqui")
 
         const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
             usertoken
@@ -223,7 +280,7 @@ publicacao.prototype.getById2 = async function (req, res) {
             return;
         }
 
-        var publicacoes = await pool.query("SELECT usuarios.id as user, usuarios.nome, publicacao.id, publicacao.conteudo, publicacao.visivel, publicacao.data_criacao FROM USUARIOS INNER JOIN publicacao ON publicacao.usertoken = usuarios.usertoken WHERE publicacao.id = $1  ORDER BY data_criacao DESC ", [id]);
+        var publicacoes = await pool.query("SELECT usuarios.id as user, usuarios.usertoken, usuarios.nome, publicacao.id, publicacao.conteudo, publicacao.visivel, publicacao.data_criacao FROM USUARIOS INNER JOIN publicacao ON publicacao.usertoken = usuarios.usertoken WHERE publicacao.id = $1  ORDER BY data_criacao DESC ", [id]);
 
         var likes = await pool.query("SELECT * FROM likes WHERE usertoken = $1", [
             usertoken
@@ -232,6 +289,10 @@ publicacao.prototype.getById2 = async function (req, res) {
         var usuarios = await pool.query("SELECT * FROM usuarios");
 
         for (var i = 0; i < publicacoes.rowCount; i++) {
+
+            var id_publicador = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1 ORDER BY data_criacao", [
+                publicacoes.rows[i].usertoken
+            ]);
 
             //adiciona campo likes
             publicacoes.rows[i].curtiu = false
@@ -259,14 +320,21 @@ publicacao.prototype.getById2 = async function (req, res) {
                 var autor = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
                     comentarios.rows[j].usertoken
                 ]);
-                aComentarios.push({ nome: autor.rows[0].nome, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
+                aComentarios.push({ id_autor: autor.rows[0].id, nome: autor.rows[0].nome, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
             }
 
             publicacoes.rows[i].comentarios = aComentarios
             publicacoes.rows[i].openComentarios = false
+            publicacoes.rows[i].id_publicador = id_publicador.rows[0].id
+            if (id_publicador.rows[0].id === query.rows[0].id) {//se eu sou o dono da publicacao
+                publicacoes.rows[i].owner = true
+            }
+            else {
+                publicacoes.rows[i].owner = false
+            }
 
             //deleta campo usertoken
-            //delete publicacoes.rows[i].usertoken
+            delete publicacoes.rows[i].usertoken
 
             var fotos = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [publicacoes.rows[i].user]);
             if (fotos.rowCount > 0) {
@@ -305,7 +373,7 @@ publicacao.prototype.getByPubSearch = async function (req, res) {
             return;
         }
 
-        var publicacoes = await pool.query("SELECT usuarios.id as user, usuarios.nome, publicacao.id, publicacao.conteudo, publicacao.visivel, publicacao.data_criacao FROM USUARIOS INNER JOIN publicacao ON publicacao.usertoken = usuarios.usertoken WHERE publicacao.conteudo LIKE $1 ORDER BY data_criacao DESC ", ['%' + search + '%']);
+        var publicacoes = await pool.query("SELECT usuarios.id as user, usuarios.usertoken, usuarios.nome, publicacao.id, publicacao.conteudo, publicacao.visivel, publicacao.data_criacao FROM USUARIOS INNER JOIN publicacao ON publicacao.usertoken = usuarios.usertoken WHERE publicacao.conteudo LIKE $1 ORDER BY data_criacao DESC ", ['%' + search + '%']);
 
         if (publicacoes.rowCount < 1) {
             res.json([])
@@ -320,6 +388,10 @@ publicacao.prototype.getByPubSearch = async function (req, res) {
         var usuarios = await pool.query("SELECT * FROM usuarios");
 
         for (var i = 0; i < publicacoes.rowCount; i++) {
+
+            var id_publicador = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1 ORDER BY data_criacao", [
+                publicacoes.rows[i].usertoken
+            ]);
 
             //adiciona campo likes
             publicacoes.rows[i].curtiu = false
@@ -347,14 +419,22 @@ publicacao.prototype.getByPubSearch = async function (req, res) {
                 var autor = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
                     comentarios.rows[j].usertoken
                 ]);
-                aComentarios.push({ nome: autor.rows[0].nome, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
+                aComentarios.push({ id_autor: autor.rows[0].id, nome: autor.rows[0].nome, conteudo: comentarios.rows[j].conteudo, data_criacao: comentarios.rows[j].data_criacao })
             }
 
             publicacoes.rows[i].comentarios = aComentarios
             publicacoes.rows[i].openComentarios = false
+            publicacoes.rows[i].id_publicador = id_publicador.rows[0].id
+            if (id_publicador.rows[0].id === query.rows[0].id) {//se eu sou o dono da publicacao
+                publicacoes.rows[i].owner = true
+            }
+            else {
+                publicacoes.rows[i].owner = false
+            }
+
 
             //deleta campo usertoken
-            //delete publicacoes.rows[i].usertoken
+            delete publicacoes.rows[i].usertoken
 
             var fotos = await pool.query("SELECT id, img_json FROM foto_perfil WHERE user_id = $1", [publicacoes.rows[i].user]);
             if (fotos.rowCount > 0) {

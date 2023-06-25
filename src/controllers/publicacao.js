@@ -14,6 +14,14 @@ module.exports.get = function (app, req, res) {
 
 }
 
+module.exports.update = function (app, req, res) {
+
+    var publicacaoModel = new app.src.models.publicacao();
+
+    publicacaoModel.update(req, res)
+
+}
+
 module.exports.getById = function (app, req, res) {
 
     var publicacaoModel = new app.src.models.publicacao();
