@@ -22,6 +22,22 @@ module.exports.update = function (app, req, res) {
 
 }
 
+module.exports.delete = function (app, req, res) {
+
+    var publicacaoModel = new app.src.models.publicacao();
+
+    publicacaoModel.delete(req, res)
+
+}
+
+module.exports.deleteModeracao = function (app, req, res) {
+
+    var publicacaoModel = new app.src.models.publicacao();
+
+    publicacaoModel.deleteModeracao(req, res)
+
+}
+
 module.exports.getById = function (app, req, res) {
 
     var publicacaoModel = new app.src.models.publicacao();

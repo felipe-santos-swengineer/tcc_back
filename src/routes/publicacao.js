@@ -12,6 +12,14 @@ module.exports = function (app) {
         app.src.controllers.publicacao.update(app, req, res);
     });
 
+    app.post('/deletePublicacao', function (req, res) {
+        app.src.controllers.publicacao.delete(app, req, res);
+    });
+
+    app.post('/deleteModeracao', function (req, res) {
+        app.src.controllers.publicacao.deleteModeracao(app, req, res);
+    });
+
     app.post('/getByIdPub', function (req, res) {
         app.src.controllers.publicacao.getById(app, req, res);
     });

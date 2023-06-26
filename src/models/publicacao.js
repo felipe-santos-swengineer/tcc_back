@@ -9,6 +9,8 @@ publicacao.prototype.criar = async function (req, res) {
         var body = req.body;
         var usertoken = body.usertoken;
         var conteudo = body.conteudo;
+        var noticia = body.noticia;
+        console.log(body.noticia + "")
 
         const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
             usertoken
@@ -20,13 +22,18 @@ publicacao.prototype.criar = async function (req, res) {
             return;
         }
 
+        if (noticia && query.rows[0].tipo !== 'Colaborador') {
+            res.json("Usuário inválido!")
+            return;
+        }
+
         if (conteudo.length < 1) {
             res.json("Publicação vazia!")
             return;
         }
 
-        const query2 = await pool.query("INSERT INTO publicacao(conteudo, usertoken) VALUES ($1, $2)", [
-            conteudo, usertoken
+        const query2 = await pool.query("INSERT INTO publicacao(conteudo, usertoken, noticia) VALUES ($1, $2, $3)", [
+            conteudo, usertoken, noticia
         ]);
 
         res.json("Publicação feita!");
@@ -57,18 +64,27 @@ publicacao.prototype.get = async function (req, res) {
             return;
         }
 
+        //todos as amizades do usuario em questão
+        var amigos = await pool.query("SELECT usu.usertoken as token FROM usuarios usu INNER JOIN amigos ami ON usu.id = ami.pessoa1_id WHERE pessoa_id = $1", [
+            query.rows[0].id
+        ]);
+
         var publicacoes = await pool.query("SELECT * FROM publicacao ORDER BY data_criacao DESC");
+
         var likes = await pool.query("SELECT * FROM likes WHERE usertoken = $1", [
             usertoken
         ]);
+
         var usuarios = await pool.query("SELECT * FROM usuarios", []);
 
+        var publicacoesFeed = []
 
         for (var i = 0; i < publicacoes.rowCount; i++) {
 
             var id_publicador = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1 ORDER BY data_criacao", [
                 publicacoes.rows[i].usertoken
             ]);
+
 
             //adiciona campo likes
             publicacoes.rows[i].curtiu = false
@@ -117,12 +133,26 @@ publicacao.prototype.get = async function (req, res) {
                 publicacoes.rows[i].img = null
             }
 
+            var pubToken = publicacoes.rows[i].usertoken
+
             //deleta campo usertoken
             delete publicacoes.rows[i].usertoken
 
+            if (!publicacoes.rows[i].noticia) { //se não é noticia, verifica se é de amigo
+                for (var j = 0; j < amigos.rowCount; j++) {
+                    if (amigos.rows[j].token === pubToken || pubToken === query.rows[0].usertoken) {
+                        publicacoesFeed.push(publicacoes.rows[i])
+                        break
+                    }
+                }
+            }
+            else {
+                publicacoesFeed.push(publicacoes.rows[i])
+            }
+
         }
 
-        res.json(publicacoes.rows);
+        res.json(publicacoesFeed);
         return;
 
     }
@@ -169,6 +199,75 @@ publicacao.prototype.update = async function (req, res) {
     }
 }
 
+
+publicacao.prototype.delete = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var id = body.id;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json([])
+            return;
+        }
+
+        var publicacoes = await pool.query("DELETE FROM publicacao WHERE id = $1 AND usertoken = $2", [
+            id, usertoken
+        ]);
+
+
+        res.json([]);
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
+
+publicacao.prototype.deleteModeracao = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var id = body.id;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json([])
+            return;
+        }
+
+        if (query.rows[0].tipo !== 'Colaborador') {
+            res.json([])
+            return;
+        }
+
+        var publicacoes = await pool.query("DELETE FROM publicacao WHERE id = $1", [
+            id
+        ]);
+
+
+        res.json([]);
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
 
 publicacao.prototype.getById = async function (req, res) {
     try {

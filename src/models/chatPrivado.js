@@ -105,6 +105,26 @@ chatPrivado.prototype.getChatPrivado = async function (req, res) {
                     getChats.rows[i]['foto'] = []
                 }
 
+                //last msg
+                var getMensagens = await pool.query("select * from mensagem_privada where privado_id = $1 ORDER BY data_criacao ASC", [
+                    getChats.rows[i].id
+                ]);
+
+                if (getMensagens.rowCount < 1) {
+                    getChats.rows[i]['last_msg'] = ''
+                    getChats.rows[i]['last_msg_autor'] = ''
+                }
+                else {
+                    if (query.rows[0].id === getMensagens.rows[getMensagens.rowCount - 1].autor) {
+                        getChats.rows[i]['last_msg_autor'] = 'Você'
+                    }
+                    else{
+                        getChats.rows[i]['last_msg_autor'] = getParticipante.rows[0].nome
+                    }
+
+                    getChats.rows[i]['last_msg'] = getMensagens.rows[getMensagens.rowCount - 1].conteudo
+                }
+
             }
             res.json(getChats.rows)
             return
@@ -249,7 +269,7 @@ chatPrivado.prototype.getMensagensPrivado = async function (req, res) {
                 chatPrivado_id
             ]);
 
-            for(var i = 0; i < getMensagens.rowCount; i++){
+            for (var i = 0; i < getMensagens.rowCount; i++) {
                 var getFoto = await pool.query("select img_json from foto_perfil where user_id = $1", [
                     getMensagens.rows[i].autor
                 ]);
@@ -258,19 +278,19 @@ chatPrivado.prototype.getMensagensPrivado = async function (req, res) {
                     getMensagens.rows[i].autor
                 ]);
 
-                if(getFoto.rowCount > 0){
+                if (getFoto.rowCount > 0) {
                     getMensagens.rows[i]['foto'] = getFoto.rows[0].img_json.img
                 }
-                
+
                 getMensagens.rows[i]['nome'] = getNome.rows[0].nome
-    
-                if(getMensagens.rows[i].autor === query.rows[0].id){
+
+                if (getMensagens.rows[i].autor === query.rows[0].id) {
                     getMensagens.rows[i]['self'] = true
                 }
-                else{
+                else {
                     getMensagens.rows[i]['self'] = false
                 }
-                
+
             }
 
             res.json(getMensagens.rows)

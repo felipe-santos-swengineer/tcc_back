@@ -76,7 +76,26 @@ grupo.prototype.getGrupo = async function (req, res) {
                 var getParticipantes = await pool.query("select nome, usuarios.id from usuarios inner join membros_grupo on membros_grupo.id_membro = usuarios.id where membros_grupo.id_grupo = $1 and membros_grupo.id_membro != $2", [
                     getGp.rows[i].id, query.rows[0].id
                 ]);
+
+                var getMensagens = await pool.query("select * from mensagem_grupo where grupo_id = $1 ORDER BY data_criacao ASC", [
+                    getGp.rows[i].id
+                ]);
+
                 getGp.rows[i]['participantes'] = getParticipantes.rows
+                if(getMensagens.rowCount < 1){
+                    getGp.rows[i]['last_msg'] = ''
+                    getGp.rows[i]['last_msg_autor'] = ''
+                }
+                else{
+                    getGp.rows[i]['last_msg_autor'] = 'Você'
+                    for(var j = 0; j < getParticipantes.rowCount; j++){
+                        if(getParticipantes.rows[j].id === getMensagens.rows[getMensagens.rowCount - 1].autor){
+                            getGp.rows[i]['last_msg_autor'] = getParticipantes.rows[j].nome
+                        }
+                    }
+                    getGp.rows[i]['last_msg'] = getMensagens.rows[getMensagens.rowCount - 1].conteudo
+                }
+                
             }
             res.json(getGp.rows)
             return
