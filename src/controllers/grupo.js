@@ -32,3 +32,10 @@ module.exports.setMensagensGrupo = function (app, req, res) {
     model.setMensagensGrupo(req, res)
 
 }
+
+module.exports.sairGrupo = function (app, req, res) {
+
+    var model = new app.src.models.grupo();
+    model.sairGrupo(req, res)
+
+}

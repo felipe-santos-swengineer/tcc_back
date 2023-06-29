@@ -19,4 +19,8 @@ module.exports = function (app) {
     app.post('/getMensagensPrivado', function (req, res) {
         app.src.controllers.chatPrivado.getMensagensPrivado(app, req, res);
     });
+
+    app.post('/sairConversa', function (req, res) {
+        app.src.controllers.chatPrivado.sairConversa(app, req, res);
+    });
 }

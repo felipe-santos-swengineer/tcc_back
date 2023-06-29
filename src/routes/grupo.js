@@ -20,4 +20,8 @@ module.exports = function (app) {
         app.src.controllers.grupo.setMensagensGrupo(app, req, res);
     });
 
+    app.post('/sairGrupo', function (req, res) {
+        app.src.controllers.grupo.sairGrupo(app, req, res);
+    });
+
 }

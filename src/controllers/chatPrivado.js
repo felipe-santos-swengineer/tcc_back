@@ -32,3 +32,10 @@ module.exports.getMensagensPrivado = function (app, req, res) {
     model.getMensagensPrivado(req, res)
 
 }
+
+module.exports.sairConversa = function (app, req, res) {
+
+    var model = new app.src.models.chatPrivado();
+    model.sairConversa(req, res)
+
+}

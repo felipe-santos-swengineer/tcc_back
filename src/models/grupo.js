@@ -52,6 +52,37 @@ grupo.prototype.criarGrupo = async function (req, res) {
     }
 }
 
+grupo.prototype.sairGrupo = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var grupo_id = body.id;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json("Usuário Invalido!")
+            return;
+        }
+
+        const exitGp = await pool.query("DELETE FROM membros_grupo WHERE id_grupo = $1 AND id_membro = $2", [
+            grupo_id, query.rows[0].id
+        ]);
+
+        res.json("Remoção de participação com sucesso!")
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
+
 grupo.prototype.getGrupo = async function (req, res) {
     try {
 
@@ -82,20 +113,20 @@ grupo.prototype.getGrupo = async function (req, res) {
                 ]);
 
                 getGp.rows[i]['participantes'] = getParticipantes.rows
-                if(getMensagens.rowCount < 1){
+                if (getMensagens.rowCount < 1) {
                     getGp.rows[i]['last_msg'] = ''
                     getGp.rows[i]['last_msg_autor'] = ''
                 }
-                else{
+                else {
                     getGp.rows[i]['last_msg_autor'] = 'Você'
-                    for(var j = 0; j < getParticipantes.rowCount; j++){
-                        if(getParticipantes.rows[j].id === getMensagens.rows[getMensagens.rowCount - 1].autor){
+                    for (var j = 0; j < getParticipantes.rowCount; j++) {
+                        if (getParticipantes.rows[j].id === getMensagens.rows[getMensagens.rowCount - 1].autor) {
                             getGp.rows[i]['last_msg_autor'] = getParticipantes.rows[j].nome
                         }
                     }
                     getGp.rows[i]['last_msg'] = getMensagens.rows[getMensagens.rowCount - 1].conteudo
                 }
-                
+
             }
             res.json(getGp.rows)
             return
@@ -138,6 +169,16 @@ grupo.prototype.getGrupoById = async function (req, res) {
                 var getParticipantes = await pool.query("select nome, usuarios.id from usuarios inner join membros_grupo on membros_grupo.id_membro = usuarios.id where membros_grupo.id_grupo = $1 and membros_grupo.id_membro != $2", [
                     getGp.rows[i].id, query.rows[0].id
                 ]);
+
+                for (var j = 0; j < getParticipantes.rowCount; j++) {
+                    var getFoto = await pool.query("select img_json from foto_perfil where user_id = $1", [
+                        getParticipantes.rows[j].id
+                    ]);
+                    if (getFoto.rowCount > 0) {
+                        getParticipantes.rows[j]['foto'] = getFoto.rows[0].img_json.img
+                    }
+                }
+
                 getGp.rows[i]['participantes'] = getParticipantes.rows
             }
             res.json(getGp.rows)
@@ -180,7 +221,7 @@ grupo.prototype.getMensagensGrupo = async function (req, res) {
                 grupo_id
             ]);
 
-            for(var i = 0; i < getMensagens.rowCount; i++){
+            for (var i = 0; i < getMensagens.rowCount; i++) {
                 var getFoto = await pool.query("select img_json from foto_perfil where user_id = $1", [
                     getMensagens.rows[i].autor
                 ]);
@@ -189,19 +230,19 @@ grupo.prototype.getMensagensGrupo = async function (req, res) {
                     getMensagens.rows[i].autor
                 ]);
 
-                if(getFoto.rowCount > 0){
+                if (getFoto.rowCount > 0) {
                     getMensagens.rows[i]['foto'] = getFoto.rows[0].img_json.img
                 }
-                
+
                 getMensagens.rows[i]['nome'] = getNome.rows[0].nome
-    
-                if(getMensagens.rows[i].autor === query.rows[0].id){
+
+                if (getMensagens.rows[i].autor === query.rows[0].id) {
                     getMensagens.rows[i]['self'] = true
                 }
-                else{
+                else {
                     getMensagens.rows[i]['self'] = false
                 }
-                
+
             }
 
             res.json(getMensagens.rows)

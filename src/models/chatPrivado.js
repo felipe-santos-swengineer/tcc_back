@@ -118,7 +118,7 @@ chatPrivado.prototype.getChatPrivado = async function (req, res) {
                     if (query.rows[0].id === getMensagens.rows[getMensagens.rowCount - 1].autor) {
                         getChats.rows[i]['last_msg_autor'] = 'Você'
                     }
-                    else{
+                    else {
                         getChats.rows[i]['last_msg_autor'] = getParticipante.rows[0].nome
                     }
 
@@ -232,6 +232,42 @@ chatPrivado.prototype.setMensagensPrivado = async function (req, res) {
                 mensagem, query.rows[0].id, chatPrivado_id
             ]);
         }
+
+        res.json([])
+        return;
+
+    }
+    catch (err) {
+        console.log(err);
+        res.json(err);
+        return;
+    }
+}
+
+chatPrivado.prototype.sairConversa = async function (req, res) {
+    try {
+
+        var body = req.body;
+        var usertoken = body.usertoken;
+        var id1 = body.id1;
+        var id2 = body.id2;
+
+        const query = await pool.query("SELECT * FROM usuarios WHERE usertoken = $1", [
+            usertoken
+        ]);
+
+        if (query.rowCount < 1) {
+            res.json([])
+            return;
+        }
+
+        var exitChat = await pool.query("DELETE FROM privado WHERE pessoa1_id = $1 AND pessoa2_id = $2", [
+            id1, id2
+        ]);
+
+        var exitChat2 = await pool.query("DELETE FROM privado WHERE pessoa1_id = $1 AND pessoa2_id = $2", [
+            id2, id1
+        ]);
 
         res.json([])
         return;
